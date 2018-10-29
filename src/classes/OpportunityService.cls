@@ -18,8 +18,8 @@ public with sharing class OpportunityService {
             delete opportunityLineItems;
             updateCurrencyIsoCode(opportunities);
             List<PricebookEntry> pricebookEntries = getPricebookEntries(opportunityLineItems);
-            Map<Id, Id> pricebookEntriesIdsByOppLineItemsIds = getPricebookEntriesIdsByOppLineItemsIds(opportunityLineItems, pricebookEntries);
-            List<OpportunityLineItem> newOpportunityLineItems = createNewOpportunityLineItemsList(opportunityLineItems, pricebookEntriesIdsByOppLineItemsIds);
+            Map<String, Id> pricebookEntriesIdsByIdentifier = getPricebookEntriesIdsByOppLineItemsIds(pricebookEntries);
+            List<OpportunityLineItem> newOpportunityLineItems = createNewOpportunityLineItemsList(opportunityLineItems, pricebookEntriesIdsByIdentifier);
             insert newOpportunityLineItems;
         }
     }
@@ -89,28 +89,22 @@ public with sharing class OpportunityService {
         return pricebookEntries;
     }
 
-    private Map<Id, Id> getPricebookEntriesIdsByOppLineItemsIds(List<OpportunityLineItem> opportunityLineItems, List<PricebookEntry> pricebookEntries) {
-        Map<Id, Id> resultMap = new Map<Id, Id>();
-        for (OpportunityLineItem opportunityLineItem : opportunityLineItems) {
-            for (PricebookEntry pricebookEntry : pricebookEntries) {
-                if (opportunityLineItem.Opportunity.Pricebook2Id == pricebookEntry.Pricebook2Id
-                        && opportunityLineItem.Opportunity.Custom_Currency__c == pricebookEntry.CurrencyIsoCode
-                        && opportunityLineItem.Product2Id == pricebookEntry.Product2Id) {
-                    resultMap.put(opportunityLineItem.Id, pricebookEntry.Id);
-                }
-            }
+    private Map<String, Id> getPricebookEntriesIdsByOppLineItemsIds(List<PricebookEntry> pricebookEntries) {
+        Map<String, Id> resultMap = new Map<String, Id>();
+        for (PricebookEntry pricebookEntry : pricebookEntries) {
+            resultMap.put(pricebookEntry.Pricebook2Id + pricebookEntry.CurrencyIsoCode + pricebookEntry.Product2Id, pricebookEntry.Id);
         }
         return resultMap;
     }
 
-    private List<OpportunityLineItem> createNewOpportunityLineItemsList(List<OpportunityLineItem> opportunityLineItems, Map<Id, Id> resultMap) {
+    private List<OpportunityLineItem> createNewOpportunityLineItemsList(List<OpportunityLineItem> opportunityLineItems, Map<String, Id> pricebookEntriesIdsByIdentifier) {
         List<OpportunityLineItem> result = new List<OpportunityLineItem>();
         for (OpportunityLineItem opportunityLineItem : opportunityLineItems) {
             OpportunityLineItem newOpportunityLineItem = new OpportunityLineItem();
             newOpportunityLineItem.OpportunityId = opportunityLineItem.OpportunityId;
             newOpportunityLineItem.Quantity = opportunityLineItem.Quantity;
             newOpportunityLineItem.UnitPrice = opportunityLineItem.UnitPrice;
-            newOpportunityLineItem.PricebookEntryId = resultMap.get(opportunityLineItem.Id);
+            newOpportunityLineItem.PricebookEntryId = pricebookEntriesIdsByIdentifier.get(opportunityLineItem.Opportunity.Pricebook2Id + opportunityLineItem.Opportunity.Custom_Currency__c + opportunityLineItem.Product2Id);
             result.add(newOpportunityLineItem);
         }
         return result;
