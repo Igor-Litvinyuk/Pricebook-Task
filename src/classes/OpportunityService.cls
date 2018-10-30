@@ -50,8 +50,7 @@ public with sharing class OpportunityService {
     private List<OpportunityLineItem> getRelatedOpportunityLineItems(List<Opportunity> opportunities) {
         return [
                 SELECT
-                        Id
-                        , OpportunityId
+                        OpportunityId
                         , Quantity
                         , UnitPrice
                         , Product2Id
@@ -104,7 +103,8 @@ public with sharing class OpportunityService {
             newOpportunityLineItem.OpportunityId = opportunityLineItem.OpportunityId;
             newOpportunityLineItem.Quantity = opportunityLineItem.Quantity;
             newOpportunityLineItem.UnitPrice = opportunityLineItem.UnitPrice;
-            newOpportunityLineItem.PricebookEntryId = pricebookEntriesIdsByIdentifier.get(opportunityLineItem.Opportunity.Pricebook2Id + opportunityLineItem.Opportunity.Custom_Currency__c + opportunityLineItem.Product2Id);
+            newOpportunityLineItem.PricebookEntryId = pricebookEntriesIdsByIdentifier.get(opportunityLineItem.Opportunity.Pricebook2Id
+                    + opportunityLineItem.Opportunity.Custom_Currency__c + opportunityLineItem.Product2Id);
             result.add(newOpportunityLineItem);
         }
         return result;
